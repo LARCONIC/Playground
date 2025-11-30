@@ -1,6 +1,6 @@
-# 🎯 Shots Playground
+# 🎯Playground
 
-**Shots Playground** is an open-source community repo where developers  
+**Playground** is an open-source community repo where developers  
 build **small, eye-catching, single-file HTML projects** to show off their creativity.
 
 No need for big full-stack apps –  
