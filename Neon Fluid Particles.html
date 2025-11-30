@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Fluid Particles</title>
+    <style>
+        /* CSS Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden; /* Prevents scrollbars */
+            background: black;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Optional: simple instruction overlay */
+        .instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.3);
+            pointer-events: none; /* Let mouse pass through to canvas */
+            font-size: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas1"></canvas>
+    
+    <div class="instructions">Move Mouse & Click</div>
+
+    <script>
+        const canvas = document.getElementById('canvas1');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray = [];
+        let hue = 0; // Starts the color cycle
+
+        // Mouse interaction object
+        const mouse = {
+            x: undefined,
+            y: undefined,
+        }
+
+        // update mouse position
+        window.addEventListener('mousemove', function(event){
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        // Add burst of particles on click
+        window.addEventListener('click', function(event){
+            mouse.x = event.x;
+            mouse.y = event.y;
+            for (let i = 0; i < 15; i++){
+                particlesArray.push(new Particle());
+            }
+        });
+
+        // Handle resizing so canvas doesn't stretch
+        window.addEventListener('resize', function(){
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor(){
+                // Start particles at mouse position if available, else random
+                this.x = mouse.x || Math.random() * canvas.width;
+                this.y = mouse.y || Math.random() * canvas.height;
+                
+                this.size = Math.random() * 15 + 1;
+                this.speedX = Math.random() * 3 - 1.5;
+                this.speedY = Math.random() * 3 - 1.5;
+                this.color = 'hsl(' + hue + ', 100%, 50%)';
+            }
+            update(){
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                // Shrink particle over time
+                if (this.size > 0.2) this.size -= 0.1;
+
+                // Interaction with mouse (Pythagorean theorem)
+                // distance d = sqrt(dx^2 + dy^2)
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                // "Force Field" effect
+                if (distance < 200) {
+                     const forceDirectionX = dx / distance;
+                     const forceDirectionY = dy / distance;
+                     const force = (200 - distance) / 200; // stronger when closer
+                     const directionX = forceDirectionX * force * 2; 
+                     const directionY = forceDirectionY * force * 2; 
+                     
+                     // Move away from mouse
+                     this.x -= directionX;
+                     this.y -= directionY;
+                }
+            }
+            draw(){
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function handleParticles(){
+            for (let i = 0; i < particlesArray.length; i++){
+                particlesArray[i].update();
+                particlesArray[i].draw();
+                
+                // Remove particles that are too small or burned out
+                if (particlesArray[i].size <= 0.3){
+                    particlesArray.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        function animate(){
+            // The Trail Effect: 
+            // Instead of clearing the canvas, draw a semi-transparent black rect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            handleParticles();
+            
+            // Add new particles constantly to maintain flow
+            // Increase '5' to '10' for more density (might lag on slow machines)
+            if (particlesArray.length < 300) { 
+                 particlesArray.push(new Particle()); 
+                 particlesArray.push(new Particle()); 
+                 particlesArray.push(new Particle()); 
+            }
+
+            hue += 2; // Cycle through colors
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
